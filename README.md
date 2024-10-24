@@ -1,0 +1,1 @@
+Biblioteca de logs para python. Feita para diminuir a escrita e reescrita.
