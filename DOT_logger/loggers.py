@@ -24,12 +24,12 @@ class DOTLogger():
             id: str = "",
             write_to: str = "",
         ) -> None:
-        if self.log_is_blocked(set, log_class, id):
+        if self.is_log_blocked(set, log_class, id):
             return None
         
         pass
 
-    def log_is_blocked(self, set: str, log_class: str, id: str) -> bool:
+    def is_log_blocked(self, set: str, log_class: str, id: str) -> bool:
         """
         Retorna True se o log está bloqueado de alguma forma,
         False caso contrário.
@@ -48,26 +48,26 @@ class DOTLogger():
         
         return False
     
-    def write_log(self, set: str, log_class: str, id: str, write_to: str) -> Callable[[str], None]:
+    def write_log_logic(self, set: str, log_class: str, id: str, write_to: str) -> Callable[[str], None]:
         """
         Esse método implementa a lógica da hierarquia das configurações de escrita
-        e chama write_log_method() para retornar o método que será usado na escrita do log.
+        e chama get_write_log_method() para retornar o método que será usado na escrita do log.
         """
         if write_to:
-            return self.write_log_method(write_to)
+            return self.get_write_log_method(write_to)
         elif id:
             if write_to_by_id := WRITE_LOGS_TO_BY_ID.get(id, ""):
-                return self.write_log_method(write_to_by_id)
+                return self.get_write_log_method(write_to_by_id)
         elif log_class:
             if write_to_by_class := WRITE_LOGS_TO_BY_CLASS.get(log_class, ""):
-                return self.write_log_method(write_to_by_class)
+                return self.get_write_log_method(write_to_by_class)
         elif set:
             if write_to_by_set := WRITE_LOGS_TO_BY_SET.get(set, ""):
-                return self.write_log_method(write_to_by_set)
+                return self.get_write_log_method(write_to_by_set)
             
-        return self.write_log_method("prompt")
+        return self.get_write_log_method("prompt")
 
-    def write_log_method(self, write_to: str) -> Callable[[str], None]:
+    def get_write_log_method(self, write_to: str) -> Callable[[str], None]:
         """
         Define o método que será usado na escrita do log.
         """
