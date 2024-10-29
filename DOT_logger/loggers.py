@@ -131,13 +131,18 @@ class DOTLogger():
             f", but {write_to} is no one of them."
             )
 
-    def write_log(self, msg: str, path: str | Path = "") -> None:
+    def write_log(self, msg: str, path: str | Path = "") ->None:
         if not path:
             try: path = self.log_path
             except:
                 raise Exception("No log path especified.")
 
-        pass
+        if type(path) == str:
+            path = Path(path)
+
+        log_file = path.open("a") # type: ignore
+        log_file.write(msg)
+        log_file.close()
 
     def transform_path(self) -> None:
         """
