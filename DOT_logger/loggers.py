@@ -41,8 +41,9 @@ class DOTLogger():
             origin_path,
             origin_resource
         )
-        
-        pass
+
+        write_log_method = self.write_log_logic()
+        write_log_method(log)
 
     def assemble_log(
         self,
