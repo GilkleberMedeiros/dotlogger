@@ -9,8 +9,16 @@ class DOTLogger():
     """
     Classe de logging principal, responsável por efetivamente fazer os logs.
     """
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        pass
+    def __init__(
+            self, 
+            set: str = "",
+            log_class: str = "",
+            write_to: str = "",
+            *args: Any, **kwargs: Any
+        ) -> None:
+        self.set = set
+        self.log_class = log_class
+        self.write_to = write_to or WRITE_ALL_LOGS_TO
 
     def log(
             self,
@@ -20,12 +28,11 @@ class DOTLogger():
             include_time: bool = True,
             origin_path: str = "",
             origin_resource: str = "",
-            set: str = "",
-            log_class: str = "",
             id: str = "",
-            write_to: str = "",
         ) -> None:
-        if self.is_log_blocked(set, log_class, id):
+        self.id = id
+
+        if self.is_log_blocked(self.set, self.log_class, self.id):
             return None
         
         log = self.assemble_log(
@@ -85,21 +92,21 @@ class DOTLogger():
         
         return False
     
-    def write_log_logic(self, set: str, log_class: str, id: str, write_to: str) -> Callable[[str], None]:
+    def write_log_logic(self) -> Callable[[str], None]:
         """
         Esse método implementa a lógica da hierarquia das configurações de escrita
         e chama get_write_log_method() para retornar o método que será usado na escrita do log.
         """
-        if write_to:
-            return self.get_write_log_method(write_to)
-        elif id:
-            if write_to_by_id := WRITE_LOGS_TO_BY_ID.get(id, ""):
+        if self.write_to:
+            return self.get_write_log_method(self.write_to)
+        elif self.id:
+            if write_to_by_id := WRITE_LOGS_TO_BY_ID.get(self.id, ""):
                 return self.get_write_log_method(write_to_by_id)
-        elif log_class:
-            if write_to_by_class := WRITE_LOGS_TO_BY_CLASS.get(log_class, ""):
+        elif self.log_class:
+            if write_to_by_class := WRITE_LOGS_TO_BY_CLASS.get(self.log_class, ""):
                 return self.get_write_log_method(write_to_by_class)
-        elif set:
-            if write_to_by_set := WRITE_LOGS_TO_BY_SET.get(set, ""):
+        elif self.set:
+            if write_to_by_set := WRITE_LOGS_TO_BY_SET.get(self.set, ""):
                 return self.get_write_log_method(write_to_by_set)
             
         return self.get_write_log_method("prompt")
