@@ -18,7 +18,7 @@ class DOTLogger():
         ) -> None:
         self.set = set
         self.log_class = log_class
-        self.write_to = write_to or WRITE_ALL_LOGS_TO
+        self.write_to = write_to or get_write_all_logs_to()
 
     def log(
             self,
@@ -79,16 +79,16 @@ class DOTLogger():
         Retorna True se o log está bloqueado de alguma forma,
         False caso contrário.
         """
-        if ALL_LOGS_BLOCKED:
+        if get_all_logs_blocked():
             return True
         
-        if set and set in BLOCKED_LOGS_SET:
+        if set and get_log_blocked_by_classifier(set, "set"):
             return True
         
-        if log_class and log_class in BLOCKED_LOGS_CLASS:
+        if log_class and get_log_blocked_by_classifier(log_class, "class"):
             return True
         
-        if id and id in BLOCKED_LOGS_ID:
+        if id and get_log_blocked_by_classifier(id, "id"):
             return True
         
         return False
@@ -101,13 +101,16 @@ class DOTLogger():
         if self.write_to:
             return self.get_write_log_method(self.write_to)
         elif self.id:
-            if write_to_by_id := WRITE_LOGS_TO_BY_ID.get(self.id, ""):
+            if (write_to_by_id := 
+                get_write_log_to_by_classifier(self.id, "id")):
                 return self.get_write_log_method(write_to_by_id)
         elif self.log_class:
-            if write_to_by_class := WRITE_LOGS_TO_BY_CLASS.get(self.log_class, ""):
+            if (write_to_by_class := 
+                get_write_log_to_by_classifier(self.log_class, "class")):
                 return self.get_write_log_method(write_to_by_class)
         elif self.set:
-            if write_to_by_set := WRITE_LOGS_TO_BY_SET.get(self.set, ""):
+            if (write_to_by_set := 
+                get_write_log_to_by_classifier(self.set, "set")):
                 return self.get_write_log_method(write_to_by_set)
             
         return self.get_write_log_method("prompt")
