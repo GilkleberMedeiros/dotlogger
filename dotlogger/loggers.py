@@ -70,13 +70,13 @@ class DOTLogger():
         
         log += f" {msg}"
 
-        if not origin_path:
+        if origin_path:
             log += f" IN {origin_path}"
 
-        if not origin_resource:
+        if origin_resource:
             log += f" ON {origin_resource}"
 
-        return log
+        return log + "\n"
 
     def is_log_blocked(self, set: str, log_class: str, id: str) -> bool:
         """
@@ -130,6 +130,14 @@ class DOTLogger():
         
         write_to_path = Path(write_to)
         self.log_path = write_to
+        
+        if not write_to_path.exists():
+            if write_to_path.suffix:
+                write_to_path.parent.mkdir(parents=True, exist_ok=True)
+                write_to_path.touch()
+            else:
+                write_to_path.mkdir(parents=True, exist_ok=True)
+
         if write_to_path.is_dir():
             self.transform_path()
             return self.write_log
@@ -137,7 +145,7 @@ class DOTLogger():
             return self.write_log
         
         raise ValueError(
-            "Expected a keyword, like 'prompt', a file path or a dir path"+
+            "Expected the keyword 'prompt', a file path or a dir path"+
             f", but {write_to} is no one of them."
             )
 
@@ -149,10 +157,8 @@ class DOTLogger():
                     "self.log_path does not exist and no path was especified to this method."
                     )
 
-
-        log_file = path.open("a") # type: ignore
-        log_file.write(msg)
-        log_file.close()
+        with open(path, "a") as log_file:
+            log_file.write(msg)
 
     def transform_path(self, path: str = "") -> None:
         """

@@ -10,3 +10,4 @@ from .settings import (
     get_write_log_to_by_classifier,
     remove_write_log_to_by_classifier,
 )
+from .loggers import *
