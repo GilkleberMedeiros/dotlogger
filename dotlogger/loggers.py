@@ -13,12 +13,10 @@ class DOTLogger():
             self, 
             set: str = "",
             log_class: str = "",
-            write_to: str = "",
             *args: Any, **kwargs: Any
         ) -> None:
         self.set = set
         self.log_class = log_class
-        self.write_to = write_to or get_write_all_logs_to()
 
     def log(
             self,
@@ -28,9 +26,11 @@ class DOTLogger():
             include_time: bool = True,
             origin_path: str = "",
             origin_resource: str = "",
+            write_to: str = "",
             id: str = "",
         ) -> None:
         self.id = id
+        self.write_to = write_to
 
         if self.is_log_blocked(self.set, self.log_class, self.id):
             return None
@@ -42,7 +42,11 @@ class DOTLogger():
             origin_resource
         )
 
-        write_log_method = self.write_log_logic()
+        write_log_to = self.get_log_write_to_priority(
+            self.write_to, self.set, 
+            self.log_class, self.id
+            )
+        write_log_method = self.get_write_log_method(write_log_to)
         write_log_method(log)
 
     def assemble_log(
@@ -93,27 +97,29 @@ class DOTLogger():
         
         return False
     
-    def write_log_logic(self) -> Callable[[str], None]:
+    def get_log_write_to_priority(self, write_to: str, set: str, log_class: str, id: str) -> str:
         """
-        Esse método implementa a lógica da hierarquia das configurações de escrita
-        e chama get_write_log_method() para retornar o método que será usado na escrita do log.
+        Esse método retorna uma string que pode ser o caminho de onde o 
+        log será escrito ou outra indicação de onde o log será escrito.
         """
-        if self.write_to:
-            return self.get_write_log_method(self.write_to)
-        elif self.id:
+        if write_to:
+            return self.write_to
+        elif id:
             if (write_to_by_id := 
                 get_write_log_to_by_classifier(self.id, "id")):
-                return self.get_write_log_method(write_to_by_id)
-        elif self.log_class:
+                return write_to_by_id
+        elif log_class:
             if (write_to_by_class := 
                 get_write_log_to_by_classifier(self.log_class, "class")):
-                return self.get_write_log_method(write_to_by_class)
-        elif self.set:
+                return write_to_by_class
+        elif set:
             if (write_to_by_set := 
                 get_write_log_to_by_classifier(self.set, "set")):
-                return self.get_write_log_method(write_to_by_set)
-            
-        return self.get_write_log_method("prompt")
+                return write_to_by_set
+        elif (write_all_logs_to := get_write_all_logs_to()):
+            return write_all_logs_to
+
+        return "prompt"     
 
     def get_write_log_method(self, write_to: str) -> Callable[[str], None]:
         """
@@ -123,7 +129,7 @@ class DOTLogger():
             return print
         
         write_to_path = Path(write_to)
-        self.log_path = write_to_path
+        self.log_path = write_to
         if write_to_path.is_dir():
             self.transform_path()
             return self.write_log
@@ -135,28 +141,36 @@ class DOTLogger():
             f", but {write_to} is no one of them."
             )
 
-    def write_log(self, msg: str, path: str | Path = "") ->None:
+    def write_log(self, msg: str, path: str = "") ->None:
         if not path:
             try: path = self.log_path
             except:
-                raise Exception("No log path especified.")
+                raise Exception(
+                    "self.log_path does not exist and no path was especified to this method."
+                    )
 
-        if type(path) == str:
-            path = Path(path)
 
         log_file = path.open("a") # type: ignore
         log_file.write(msg)
         log_file.close()
 
-    def transform_path(self) -> None:
+    def transform_path(self, path: str = "") -> None:
         """
         Transforma um caminho de diretório em um caminho de arquivo
         com nome YYYY-MM-DD.log
         """
+        if path:
+            try: self.log_path = path
+            except: raise Exception(
+                "self.log_path does not exist and no path was especified to this method."
+                )
+
         current_date = date.today()
         str_date = current_date.isoformat()
         file_path = str_date + ".log"
 
-        self.log_path.joinpath(file_path)
-        
+        log_path = Path(self.log_path).joinpath(file_path)
+
+        self.log_path = str(log_path)
+      
         
