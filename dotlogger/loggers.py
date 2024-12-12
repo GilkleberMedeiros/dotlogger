@@ -243,11 +243,7 @@ class DotLogger(AbstractLogger):
                 if place_path_obj.is_file():
                     func_to_write_log = self.write_text_to_file(place)
                 elif place_path_obj.is_dir():
-                    log_filename = self.get_datetime_now(self.date_filename_format) + ".logs"
-                    place_path_obj = place_path_obj.joinpath(log_filename)
-                    place_path_obj.touch()
-
-                    place = str(place_path_obj)
+                    place = self.get_log_file_path(place)
                     func_to_write_log = self.write_text_to_file(place)
                 else:
                     raise Exception(
@@ -261,11 +257,7 @@ class DotLogger(AbstractLogger):
                     place_path_obj.touch()
                     func_to_write_log = self.write_text_to_file(place)
                 elif place_path_obj.is_dir():
-                    log_filename = self.get_datetime_now(self.date_filename_format) + ".logs"
-                    place_path_obj = place_path_obj.joinpath(log_filename)
-                    place_path_obj.touch()
-
-                    place = str(place_path_obj)
+                    place = self.get_log_file_path(place)
                     func_to_write_log = self.write_text_to_file(place)
                 else:
                     raise Exception(
@@ -299,6 +291,19 @@ class DotLogger(AbstractLogger):
         
         return inner
     
+    def get_log_file_path(self, dir_path: str) -> str:
+        """
+        Receive a dir path and return a path (as plain string) for an already created log file.
+        filename will be as the date_filename_format passed in constructor.
+        """
+        path_obj = Path(dir_path)
+        log_filename = self.get_datetime_now(self.date_filename_format) + ".logs"
+        path_obj = path_obj.joinpath(log_filename)
+        path_obj.touch()
+
+        return str(path_obj)
+
     def log_repr(self) -> str:
         """Return a log repr."""
         return f"(set: {self.set}, class: {self.log_class}, id: {self.id})"
+    
