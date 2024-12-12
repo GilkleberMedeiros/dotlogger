@@ -1,182 +1,99 @@
-from typing import Any, Callable
+from typing import Any, TypeVar, Callable
+from settings import (
+    get_all_logs_blocked, 
+    block_all_logs, 
+    get_log_blocked_by_classifier, 
+    block_log_by_classifier,
+    write_all_logs_to, get_write_all_logs_to
+)
+from datetime import datetime
 from pathlib import Path
-from datetime import date, datetime
-
-from .settings import *
 
 
-class DOTLogger():
-    """
-    Classe de logging principal, responsável por efetivamente fazer os logs.
-    """
-    def __init__(
-            self, 
-            set: str = "",
-            log_class: str = "",
-            *args: Any, **kwargs: Any
-        ) -> None:
-        self.set = set
-        self.log_class = log_class
 
-    def log(
-            self,
-            msg: str,
-            log_type: str,
-            include_date: bool = False,
-            include_time: bool = True,
-            origin_path: str = "",
-            origin_resource: str = "",
-            write_to: str = "",
-            id: str = "",
-        ) -> None:
-        self.id = id
-        self.write_to = write_to
-
-        if self.is_log_blocked(self.set, self.log_class, self.id):
-            return None
-        
-        log = self.assemble_log(
-            msg, log_type, 
-            include_date, include_time,
-            origin_path,
-            origin_resource
-        )
-
-        write_log_to = self.get_log_write_to_priority(
-            self.write_to, self.set, 
-            self.log_class, self.id
-            )
-        write_log_method = self.get_write_log_method(write_log_to)
-        write_log_method(log)
-
-    def assemble_log(
-        self,
+# TODO: Realizar os testes para saber se essa função está funcionando
+# TODO: Transformar essa função em uma classe
+def log(
+        set: str, 
+        log_class: str, 
+        id: str,
         msg: str,
-        log_type: str,
-        include_date: bool = False,
+        type: str,
+        include_date: bool = True,
         include_time: bool = True,
-        origin_path: str = "",
-        origin_resource: str = "",
-    ) -> str:
-        log = f"{log_type}"
-
-        if include_date:
-            log_date = ((datetime.now()).date()).strftime("%Y/%m/%d")
-            log += f" {log_date}"
-
-        if include_time:
-            log_time = (datetime.now()).time().strftime("%H:%M:%S %p %Z")
-            log += f" {log_time}"
-        
-        log += f" {msg}"
-
-        if origin_path:
-            log += f" IN {origin_path}"
-
-        if origin_resource:
-            log += f" ON {origin_resource}"
-
-        return log + "\n"
-
-    def is_log_blocked(self, set: str, log_class: str, id: str) -> bool:
-        """
-        Retorna True se o log está bloqueado de alguma forma,
-        False caso contrário.
-        """
-        if get_all_logs_blocked():
-            return True
-        
-        if set and get_log_blocked_by_classifier(set, "set"):
-            return True
-        
-        if log_class and get_log_blocked_by_classifier(log_class, "class"):
-            return True
-        
-        if id and get_log_blocked_by_classifier(id, "id"):
-            return True
-        
+        in_location: str = "",
+        on_resource: str = "",
+        write_to: str = "",
+        ) -> bool:
+    # Stop if this log is blocked
+    if get_all_logs_blocked():
+       return False 
+    elif get_log_blocked_by_classifier(set, "set"):
+        return False
+    elif get_log_blocked_by_classifier(log_class, "class"):
+        return False
+    elif get_log_blocked_by_classifier(id, "id"):
         return False
     
-    def get_log_write_to_priority(self, write_to: str, set: str, log_class: str, id: str) -> str:
-        """
-        Esse método retorna uma string que pode ser o caminho de onde o 
-        log será escrito ou outra indicação de onde o log será escrito.
-        """
-        if write_to:
-            return self.write_to
-        elif id:
-            if (write_to_by_id := 
-                get_write_log_to_by_classifier(self.id, "id")):
-                return write_to_by_id
-        elif log_class:
-            if (write_to_by_class := 
-                get_write_log_to_by_classifier(self.log_class, "class")):
-                return write_to_by_class
-        elif set:
-            if (write_to_by_set := 
-                get_write_log_to_by_classifier(self.set, "set")):
-                return write_to_by_set
-        elif (write_all_logs_to := get_write_all_logs_to()):
-            return write_all_logs_to
+    # Get correct location to write the log
+    local_to_write_log = write_to or get_write_all_logs_to() or "print"
 
-        return "prompt"     
+    # assemble log string
+    log_string = ""
+    log_string += type + " "
+    date_log_format = r"%d/%m/%Y"
+    time_log_format = r"%H:%M:%S"
+    log_string += (datetime.now()).date().strftime(date_log_format) + " " if include_date else ""
+    log_string += (datetime.now()).time().strftime(time_log_format) + " " if include_date else ""
+    log_string += msg + " "
+    log_string += "IN " + in_location + " " if in_location else __file__ + " "
+    log_string += "ON " + on_resource + " " if on_resource else ""
+    log_string += "\n"
 
-    def get_write_log_method(self, write_to: str) -> Callable[[str], None]:
-        """
-        Define o método que será usado na escrita do log.
-        """
-        if write_to.lower() == "prompt":
-            return print
+    # Select method to write log
+    local_to_write_log_path_obj = Path(local_to_write_log)
+    func_to_write_log = print
+    if local_to_write_log != "print":
+        if local_to_write_log_path_obj.exists():
+            if local_to_write_log_path_obj.is_file():
+                func_to_write_log = write_to_file(local_to_write_log)
+            elif local_to_write_log_path_obj.is_dir():
+                date_filename_format = r"%d/%m/%Y"
+
+                filename = (datetime.now()).date().strftime(date_filename_format)
+                local_to_write_log_path_obj.joinpath(filename)
+
+                local_to_write_log = str(local_to_write_log_path_obj)
+                func_to_write_log = write_to_file(local_to_write_log)
+        else:
+            local_to_write_log_path_obj.mkdir()
+            
+            if local_to_write_log_path_obj.is_file():
+                local_to_write_log_path_obj.touch()
+                func_to_write_log = write_to_file(local_to_write_log)
+            elif local_to_write_log_path_obj.is_dir():
+                date_filename_format = r"%d.%m.%Y.logs"
+
+                filename = (datetime.now()).date().strftime(date_filename_format)
+                local_to_write_log_path_obj.joinpath(filename)
+
+                local_to_write_log = str(local_to_write_log_path_obj)
+                func_to_write_log = write_to_file(local_to_write_log)
         
-        write_to_path = Path(write_to)
-        self.log_path = write_to
+    # write the log
+    func_to_write_log(log_string)
+
+    return True
+
+
+def write_to_file(path: str) -> Callable[[str], bool]:
+    def inner_write_to_file(msg: str) -> bool:
+        try: 
+            Path(path).write_text(msg)
+        except Exception as e:
+            raise Exception(f"An error {e} occured while writing to log file.")
         
-        if not write_to_path.exists():
-            if write_to_path.suffix:
-                write_to_path.parent.mkdir(parents=True, exist_ok=True)
-                write_to_path.touch()
-            else:
-                write_to_path.mkdir(parents=True, exist_ok=True)
-
-        if write_to_path.is_dir():
-            self.transform_path()
-            return self.write_log
-        elif write_to_path.is_file():
-            return self.write_log
-        
-        raise ValueError(
-            "Expected the keyword 'prompt', a file path or a dir path"+
-            f", but {write_to} is no one of them."
-            )
-
-    def write_log(self, msg: str, path: str = "") ->None:
-        if not path:
-            try: path = self.log_path
-            except:
-                raise Exception(
-                    "self.log_path does not exist and no path was especified to this method."
-                    )
-
-        with open(path, "a") as log_file:
-            log_file.write(msg)
-
-    def transform_path(self, path: str = "") -> None:
-        """
-        Transforma um caminho de diretório em um caminho de arquivo
-        com nome YYYY-MM-DD.log
-        """
-        if path:
-            try: self.log_path = path
-            except: raise Exception(
-                "self.log_path does not exist and no path was especified to this method."
-                )
-
-        current_date = date.today()
-        str_date = current_date.isoformat()
-        file_path = str_date + ".log"
-
-        log_path = Path(self.log_path).joinpath(file_path)
-
-        self.log_path = str(log_path)
-      
-        
+        return True
+    
+    return inner_write_to_file
+    
