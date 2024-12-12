@@ -198,3 +198,77 @@ class DotLogger(AbstractLogger):
         now = datetime.now()
         
         return now.strftime(format)
+    
+    def get_place_to_write_log(write_to_param: str) -> str:
+        """Return the correct place to write log."""
+        return write_to_param or get_write_all_logs_to() or "print"
+    
+    def get_func_to_write_log(self, place_to_write_log: str) -> Callable[[str], bool] | print:
+        """
+        Return the correct function to write log based 
+        on place param passed.
+        """
+        func_to_write_log = print
+        place = place_to_write_log
+
+        place_path_obj = Path(place)
+        if place != "print":
+            if place_path_obj.exists():
+                if place_path_obj.is_file():
+                    func_to_write_log = self.write_text_to_file(place)
+                elif place_path_obj.is_dir():
+                    log_filename = self.get_datetime_now(self.date_filename_format) + ".logs"
+                    place_path_obj = place_path_obj.joinpath(log_filename)
+                    place_path_obj.touch()
+
+                    place = str(place_path_obj)
+                    func_to_write_log = self.write_text_to_file(place)
+                else:
+                    raise Exception(
+                        "Path passed is not a dir or file path."+
+                        f" in log (set: {self.set}, class: {self.log_class}, id: {self.id})"
+                        )
+            else:
+                place_path_obj.mkdir(parents=True)
+
+                if place_path_obj.suffix:
+                    place_path_obj.touch()
+                    func_to_write_log = self.write_text_to_file(place)
+                elif place_path_obj.is_dir():
+                    log_filename = self.get_datetime_now(self.date_filename_format) + ".logs"
+                    place_path_obj = place_path_obj.joinpath(log_filename)
+                    place_path_obj.touch()
+
+                    place = str(place_path_obj)
+                    func_to_write_log = self.write_text_to_file(place)
+                else:
+                    raise Exception(
+                        "Path passed is not a dir or file path."+
+                        f" in log (set: {self.set}, class: {self.log_class}, id: {self.id})"
+                        )
+                
+        return func_to_write_log
+    
+    def write_text_to_file(self, path: str) -> Callable[[str], bool]:
+        """
+        Parent closure function.
+        """
+        def inner(msg: str) -> bool:
+            """
+            Child closure function. Receive msg param and write it 
+            to path param from parent closure function;
+            """
+            path_obj = Path(path)
+            try:
+                with path_obj.open("a") as f:
+                    f.write(msg)
+                    f.flush()
+            except Exception as e:
+                raise Exception(
+                    f"Exception: {e} occured while writing log"+ 
+                    f" (set: {self.set}, class: {self.log_class}, id: {self.id})"
+                    )
+            
+            return True
+        
+        return inner
