@@ -13,7 +13,6 @@ from abc import ABC
 
 
 
-# TODO: Realizar os testes para saber se essa função está funcionando
 # TODO: Transformar essa função em uma classe
 def log(
         set: str, 
@@ -132,3 +131,24 @@ class DotLogger(AbstractLogger):
         self.time_log_format = time_log_format
         self.date_filename_format = date_filename_format
     
+    def log():
+        pass
+
+    def is_log_blocked(self) -> bool:
+        """
+        Return True if log is blocked by any 
+        classifier(set, class, id), otherwise False.
+        """
+        return self.is_blocked_by_set() or self.is_blocked_by_class() or self.is_blocked_by_id()
+    
+    def is_blocked_by_set(self) -> bool:
+        """Return True if log is blocked by classifier set, otherwise False"""
+        return get_log_blocked_by_classifier(self.set, "set")
+    
+    def is_blocked_by_class(self) -> bool:
+        """Return True if log is blocked by classifier class, otherwise False"""
+        return get_log_blocked_by_classifier(self.log_class, "class")
+    
+    def is_blocked_by_id(self) -> bool:
+        """Return True if log is blocked by classifier id, otherwise False"""
+        return get_log_blocked_by_classifier(self.id, "id")
