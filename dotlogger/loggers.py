@@ -125,7 +125,7 @@ class DotLogger(AbstractLogger):
             date_log_format: str = r"%d/%m/%Y", 
             time_log_format: str = r"%H:%M:%S",
             date_filename_format: str = r"%d_%m_%Y", 
-            ) -> None:
+        ) -> None:
         self.set = set
         self.log_class = log_class
         self.date_log_format = date_log_format
@@ -134,7 +134,7 @@ class DotLogger(AbstractLogger):
     
     def log(
             self
-            ):
+        ):
 
         stack = inspect.stack()
         self.caller_frame = stack[1] if len(stack) > 1 else 0
@@ -142,10 +142,11 @@ class DotLogger(AbstractLogger):
 
     def is_log_blocked(self) -> bool:
         """
-        Return True if log is blocked by any 
-        classifier(set, class, id), otherwise False.
+        Return True if log is blocked in some way, 
+        otherwise False.
         """
-        return self.is_blocked_by_set() or self.is_blocked_by_class() or self.is_blocked_by_id()
+        return get_all_logs_blocked() or self.is_blocked_by_set() or \
+            self.is_blocked_by_class() or self.is_blocked_by_id()
     
     def is_blocked_by_set(self) -> bool:
         """Return True if log is blocked by classifier set, otherwise False"""
