@@ -118,5 +118,17 @@ class AbstractLogger(ABC):
 
 
 class DotLogger(AbstractLogger):
-    def __init__() -> None:
-        pass
+    def __init__(
+            self, 
+            set: str, 
+            log_class: str, 
+            date_log_format: str = r"%d/%m/%Y", 
+            time_log_format: str = r"%H:%M:%S",
+            date_filename_format: str = r"%d_%m_%Y", 
+            ) -> None:
+        self.set = set
+        self.log_class = log_class
+        self.date_log_format = date_log_format
+        self.time_log_format = time_log_format
+        self.date_filename_format = date_filename_format
+    
