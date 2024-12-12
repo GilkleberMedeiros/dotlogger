@@ -1,4 +1,3 @@
-from typing import Any, TypeVar, Callable
 from .settings import (
     get_all_logs_blocked, 
     block_all_logs, 
@@ -6,8 +5,11 @@ from .settings import (
     block_log_by_classifier,
     write_all_logs_to, get_write_all_logs_to
 )
+
+from typing import Any, TypeVar, Callable
 from datetime import datetime
 from pathlib import Path
+from abc import ABC
 
 
 
@@ -111,3 +113,10 @@ def write_to_file(path: str) -> Callable[[str], bool]:
     
     return inner_write_to_file
     
+class AbstractLogger(ABC):
+    """Abstract base logger class"""
+
+
+class DotLogger(AbstractLogger):
+    def __init__() -> None:
+        pass
