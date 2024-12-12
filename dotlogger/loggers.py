@@ -10,6 +10,7 @@ from typing import Any, TypeVar, Callable
 from datetime import datetime
 from pathlib import Path
 from abc import ABC
+import inspect
 
 
 
@@ -131,7 +132,12 @@ class DotLogger(AbstractLogger):
         self.time_log_format = time_log_format
         self.date_filename_format = date_filename_format
     
-    def log():
+    def log(
+            self
+            ):
+
+        stack = inspect.stack()
+        self.caller_frame = stack[1] if len(stack) > 1 else 0
         pass
 
     def is_log_blocked(self) -> bool:
@@ -152,3 +158,42 @@ class DotLogger(AbstractLogger):
     def is_blocked_by_id(self) -> bool:
         """Return True if log is blocked by classifier id, otherwise False"""
         return get_log_blocked_by_classifier(self.id, "id")
+    
+    def assemble_log(
+        self, 
+        msg: str, 
+        type: str, 
+        include_date: bool = True, 
+        include_time: bool = True,
+        in_location: str = "",
+        on_resource: str = "",
+        ) -> str:
+        """
+        Assemble the log string and return it.
+        """
+        log_string = ""
+        log_string += type + " "
+
+        now_date_str = self.get_datetime_now(self.date_log_format)
+        now_time_str = self.get_datetime_now(self.time_log_format)
+        log_string += f"{now_date_str} " if include_date else ""
+        log_string += f"{now_time_str} " if include_time else ""
+
+        log_string += msg + " "
+
+        location = self.caller_frame.filename
+        resource = self.caller_frame.function
+        log_string += f"{in_location} " if in_location else f"{location} "
+        log_string += f"{on_resource} " if on_resource else f"{resource} "
+
+        log_string += "\n"
+
+        return log_string
+
+    def get_datetime_now(format: str) -> str:
+        """
+        Return the now datetime as string formated with format param.
+        """
+        now = datetime.now()
+        
+        return now.strftime(format)
