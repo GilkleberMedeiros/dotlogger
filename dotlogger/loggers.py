@@ -1,5 +1,5 @@
 from typing import Any, TypeVar, Callable
-from settings import (
+from .settings import (
     get_all_logs_blocked, 
     block_all_logs, 
     get_log_blocked_by_classifier, 
@@ -39,45 +39,55 @@ def log(
     local_to_write_log = write_to or get_write_all_logs_to() or "print"
 
     # assemble log string
+    caller_file = Path(".")
     log_string = ""
     log_string += type + " "
     date_log_format = r"%d/%m/%Y"
     time_log_format = r"%H:%M:%S"
     log_string += (datetime.now()).date().strftime(date_log_format) + " " if include_date else ""
-    log_string += (datetime.now()).time().strftime(time_log_format) + " " if include_date else ""
+    log_string += (datetime.now()).time().strftime(time_log_format) + " " if include_time else ""
     log_string += msg + " "
-    log_string += "IN " + in_location + " " if in_location else __file__ + " "
+    log_string += "IN " + in_location + " " if in_location else "IN " + str(caller_file.absolute()) + " "
     log_string += "ON " + on_resource + " " if on_resource else ""
     log_string += "\n"
+    del(caller_file)
 
     # Select method to write log
     local_to_write_log_path_obj = Path(local_to_write_log)
     func_to_write_log = print
     if local_to_write_log != "print":
         if local_to_write_log_path_obj.exists():
-            if local_to_write_log_path_obj.is_file():
-                func_to_write_log = write_to_file(local_to_write_log)
-            elif local_to_write_log_path_obj.is_dir():
-                date_filename_format = r"%d/%m/%Y"
+            print(f"{local_to_write_log_path_obj.absolute()}")
+            print("path exists")
+            if local_to_write_log_path_obj.is_dir():
+                print("path is dir")
+                date_filename_format = r"%d_%m_%Y"
 
-                filename = (datetime.now()).date().strftime(date_filename_format)
-                local_to_write_log_path_obj.joinpath(filename)
+                filename = (datetime.now()).date().strftime(date_filename_format) + ".logs"
+                local_to_write_log_path_obj = local_to_write_log_path_obj.joinpath(filename)
+                local_to_write_log_path_obj.touch()
+                print(str(local_to_write_log_path_obj))
 
                 local_to_write_log = str(local_to_write_log_path_obj)
+                func_to_write_log = write_to_file(local_to_write_log)
+            else:
                 func_to_write_log = write_to_file(local_to_write_log)
         else:
-            local_to_write_log_path_obj.mkdir()
+            local_to_write_log_path_obj.mkdir(parents=True)
             
-            if local_to_write_log_path_obj.is_file():
-                local_to_write_log_path_obj.touch()
-                func_to_write_log = write_to_file(local_to_write_log)
-            elif local_to_write_log_path_obj.is_dir():
-                date_filename_format = r"%d.%m.%Y.logs"
+            if local_to_write_log_path_obj.is_dir():
+                print("is dir not created")
+                date_filename_format = r"%d_%m_%Y"
 
-                filename = (datetime.now()).date().strftime(date_filename_format)
-                local_to_write_log_path_obj.joinpath(filename)
+                filename = (datetime.now()).date().strftime(date_filename_format) + ".logs"
+                local_to_write_log_path_obj = local_to_write_log_path_obj.joinpath(filename)
+                local_to_write_log_path_obj.touch()
+                print(str(local_to_write_log_path_obj))
 
                 local_to_write_log = str(local_to_write_log_path_obj)
+                func_to_write_log = write_to_file(local_to_write_log)
+            else:
+                local_to_write_log_path_obj.touch()
                 func_to_write_log = write_to_file(local_to_write_log)
         
     # write the log
@@ -89,7 +99,11 @@ def log(
 def write_to_file(path: str) -> Callable[[str], bool]:
     def inner_write_to_file(msg: str) -> bool:
         try: 
-            Path(path).write_text(msg)
+            path_obj = Path(path)
+            file = path_obj.open("a")
+            file.write(msg)
+            file.flush()
+            file.close()
         except Exception as e:
             raise Exception(f"An error {e} occured while writing to log file.")
         

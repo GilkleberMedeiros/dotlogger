@@ -7,5 +7,5 @@ setup(
     description="Biblioteca de logs para python.",
     long_description="Uma pequena biblioteca de logs para python.",
     author="Gilkleber Medeiros de Araújo",
-    packages=["DOT_logger"],
+    packages=["DOT_Logger"],
 )

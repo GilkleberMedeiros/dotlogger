@@ -1,1 +1,1 @@
-from dotlogger import *
+from .dotlogger_temporary_test import test
