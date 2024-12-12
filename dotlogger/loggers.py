@@ -133,12 +133,30 @@ class DotLogger(AbstractLogger):
         self.date_filename_format = date_filename_format
     
     def log(
-            self
-        ):
+            self,
+            id: str,
+            msg: str,
+            type: str,
+            include_date: bool = True,
+            include_time: bool = True,
+            in_location: str = "",
+            on_resource: str = "",
+            write_to: str = "",
+        ) -> bool:
+        self.id = id
+
+        if not self.is_log_blocked():
+            return False
 
         stack = inspect.stack()
         self.caller_frame = stack[1] if len(stack) > 1 else 0
-        pass
+
+        log_msg = self.assemble_log(msg, type, include_date, include_time, in_location, on_resource)
+
+        place_to_write_log = self.get_place_to_write_log(write_to)
+        func_to_write_log = self.get_func_to_write_log(place_to_write_log)
+
+        return func_to_write_log(log_msg)
 
     def is_log_blocked(self) -> bool:
         """
@@ -182,10 +200,10 @@ class DotLogger(AbstractLogger):
 
         log_string += msg + " "
 
-        location = self.caller_frame.filename
-        resource = self.caller_frame.function
-        log_string += f"{in_location} " if in_location else f"{location} "
-        log_string += f"{on_resource} " if on_resource else f"{resource} "
+        location = self.get_default_location()
+        resource = self.get_default_resource()
+        log_string += f"IN {in_location} " if in_location else location
+        log_string += f"ON {on_resource} " if on_resource else resource
 
         log_string += "\n"
 
@@ -198,6 +216,14 @@ class DotLogger(AbstractLogger):
         now = datetime.now()
         
         return now.strftime(format)
+    
+    def get_default_location(self) -> str:
+        """Get and return default log location already formated."""
+        return f"IN {self.caller_frame.filename} " if self.caller_frame != 0 else ""
+    
+    def get_default_resource(self) -> str:
+        """Get and return default log resource already formated."""
+        return f"ON {self.caller_frame.resource} " if self.caller_frame != 0 else ""
     
     def get_place_to_write_log(write_to_param: str) -> str:
         """Return the correct place to write log."""
@@ -226,7 +252,7 @@ class DotLogger(AbstractLogger):
                 else:
                     raise Exception(
                         "Path passed is not a dir or file path."+
-                        f" in log (set: {self.set}, class: {self.log_class}, id: {self.id})"
+                        f" in log {self.log_repr()}"
                         )
             else:
                 place_path_obj.mkdir(parents=True)
@@ -244,7 +270,7 @@ class DotLogger(AbstractLogger):
                 else:
                     raise Exception(
                         "Path passed is not a dir or file path."+
-                        f" in log (set: {self.set}, class: {self.log_class}, id: {self.id})"
+                        f" in log {self.log_repr()}"
                         )
                 
         return func_to_write_log
@@ -266,9 +292,13 @@ class DotLogger(AbstractLogger):
             except Exception as e:
                 raise Exception(
                     f"Exception: {e} occured while writing log"+ 
-                    f" (set: {self.set}, class: {self.log_class}, id: {self.id})"
+                    f" {self.log_repr()}"
                     )
             
             return True
         
         return inner
+    
+    def log_repr(self) -> str:
+        """Return a log repr."""
+        return f"(set: {self.set}, class: {self.log_class}, id: {self.id})"
