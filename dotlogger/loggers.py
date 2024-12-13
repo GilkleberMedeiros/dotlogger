@@ -158,19 +158,22 @@ class DotLogger(AbstractLogger):
                         f" in log {self.log_repr()}"
                         )
             else:
-                place_path_obj.mkdir(parents=True)
-
                 if place_path_obj.suffix:
+                    if not place_path_obj.parent.exists():
+                        place_path_obj.parent.mkdir(parents=True)
+                        
                     place_path_obj.touch()
                     func_to_write_log = self.write_text_to_file(place)
-                elif place_path_obj.is_dir():
-                    place = self.get_log_file_path(place)
-                    func_to_write_log = self.write_text_to_file(place)
                 else:
-                    raise Exception(
-                        "Path passed is not a dir or file path."+
-                        f" in log {self.log_repr()}"
-                        )
+                    place_path_obj.mkdir(parents=True)
+                    if place_path_obj.is_dir():
+                        place = self.get_log_file_path(place)
+                        func_to_write_log = self.write_text_to_file(place)
+                    else:
+                        raise Exception(
+                            "Path passed is not a dir or file path."+
+                            f" in log {self.log_repr()}"
+                            )
                 
         return func_to_write_log
     
