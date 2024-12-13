@@ -50,7 +50,7 @@ class DotLogger(AbstractLogger):
         ) -> bool:
         self.id = id
 
-        if not self.is_log_blocked():
+        if self.is_log_blocked():
             return False
 
         stack = inspect.stack()
