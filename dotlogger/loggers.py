@@ -114,6 +114,7 @@ class DotLogger(AbstractLogger):
 
         return log_string
 
+    @staticmethod
     def get_datetime_now(format: str) -> str:
         """
         Return the now datetime as string formated with format param.
@@ -128,8 +129,9 @@ class DotLogger(AbstractLogger):
     
     def get_default_resource(self) -> str:
         """Get and return default log resource already formated."""
-        return f"ON {self.caller_frame.resource} " if self.caller_frame != 0 else ""
+        return f"ON {self.caller_frame.function} " if self.caller_frame != 0 else ""
     
+    @staticmethod
     def get_place_to_write_log(write_to_param: str) -> str:
         """Return the correct place to write log."""
         return write_to_param or get_write_all_logs_to() or "print"
