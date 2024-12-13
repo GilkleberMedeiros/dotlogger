@@ -9,15 +9,20 @@ from .settings import (
 from typing import Any, TypeVar, Callable
 from datetime import datetime
 from pathlib import Path
-from abc import ABC
+from abc import ABC, abstractmethod
 import inspect
 
     
 class AbstractLogger(ABC):
     """Abstract base logger class"""
 
+    @abstractmethod
+    def log(self) -> bool:
+        pass
+
 
 class DotLogger(AbstractLogger):
+    """Main logger class."""
     def __init__(
             self, 
             set: str, 
