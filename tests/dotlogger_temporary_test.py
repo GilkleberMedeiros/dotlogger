@@ -1,4 +1,4 @@
-from ..dotlogger import *
+from dotlogger import *
 from typing import Any
 
 
