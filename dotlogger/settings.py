@@ -7,23 +7,41 @@ Como colisões de configurações são resolvidas:
     - SETs tem a menor prioriade.
 """
 
-# Block all logs if True.
-ALL_LOGS_BLOCKED = False
+global_logs_settings: dict[str, bool | str] = {} 
 
-# Block logs by their sets, classes or ids.
-BLOCKED_LOGS_SET: dict[str, bool] = {}
-BLOCKED_LOGS_CLASS: dict[str, bool] = {}
-BLOCKED_LOGS_ID: dict[str, bool] = {}
+logs_settings_by_set: dict[str, dict[str, bool | str]] = {}
+logs_settings_by_class: dict[str, dict[str, bool | str]] = {}
+logs_settings_by_id: dict[str, dict[str, bool | str]] = {}
 
-# Set all logs to be write to an especified dir or file.
-# This setting can be overriden when calling .log() method.
-WRITE_ALL_LOGS_TO = ""
+logs_settings_by_classifiers = {
+    "set": logs_settings_by_set,
+    "class": logs_settings_by_class,
+    "id": logs_settings_by_id,
+}
 
-# Set where logs will be writen based on their set, class and id.
-WRITE_LOGS_TO_BY_SET: dict[str, str] = {}
-WRITE_LOGS_TO_BY_CLASS: dict[str, str] = {}
-WRITE_LOGS_TO_BY_ID: dict[str, str] = {}
+KEY_OPTIONS_FOR_SETTINGS = ["blocked", "write_to"]
 
+
+def raise_invalid_classifier_opt(classifier_opt: str) -> None:
+    raise ValueError(
+            f"Option {classifier_opt} is not a valid option of classifier."+
+            " Valid options are set, class or id."
+        )
+
+def get_classifier_dict(
+    classifier_opt: str
+    ) -> dict[str, dict[str, bool | str]]:
+    """
+    Get correct classifier dict given a classifier option.
+    """
+    co_lowered = classifier_opt.lower()
+    
+    try:
+        classifier_dict = logs_settings_by_classifiers[co_lowered]
+    except:
+        raise_invalid_classifier_opt(classifier_opt)
+
+    return classifier_dict
 
 # Funcs to manipulate above vars
 def block_all_logs(block: bool = True) -> None:
@@ -31,93 +49,79 @@ def block_all_logs(block: bool = True) -> None:
     Block all logs if param block=True.
     Deblock all logs if param block=False.
     """
-    const_name = "ALL_LOGS_BLOCKED" 
-    globals()[const_name] = block
+    block_opt = KEY_OPTIONS_FOR_SETTINGS[0]
+
+    global_logs_settings[block_opt] = block
 
 def get_all_logs_blocked() -> bool:
     """
     Get all logs blocked.
     if all logs blocked return True, else return False
     """
-    const_name = "ALL_LOGS_BLOCKED"
-    return globals()[const_name]
+    block_opt = KEY_OPTIONS_FOR_SETTINGS[0]
+
+    return global_logs_settings.get(block_opt, False)
 
 def block_log_by_classifier(classifier: str, classifier_opt: str) -> None:
     """
-    Set a classifier to block a log if that log receive the classifier.
+    Configure a classifier to block a log if that log receive the classifier.
     """
-    classifier_var_preffix = "BLOCKED_LOGS_"
-    classifier_var_name = classifier_var_preffix + classifier_opt.upper()
+    classifier_dict = get_classifier_dict(classifier_opt)
     
-    try:
-        classifier_var = globals()[classifier_var_name]
-    except:
-        raise ValueError(
-            f"Option {classifier_opt} is not a valid option of classifier."+
-            " Valid options are set, class or id."
-        )
-    
-    classifier_var[classifier] = True
+    block_opt = KEY_OPTIONS_FOR_SETTINGS[0]
+    write_to_opt = KEY_OPTIONS_FOR_SETTINGS[1]
+
+    write_to_config = get_write_log_to_by_classifier(classifier, classifier_opt)
+
+    classifier_dict[classifier] = {
+        block_opt: True, 
+        write_to_opt: write_to_config
+        }
     
 def get_log_blocked_by_classifier(
         classifier: str, 
         classifier_opt: str
     ) -> bool:
     """
-    Get if a is set classifier(set, class, id) to block logs.
-    Return True if is blocking, otherwise
-    False.
+    Get if the classifier(set, class, id) is configured to block logs.
+    Return True if is blocking, otherwise False.
     """
-    classifier_var_preffix = "BLOCKED_LOGS_"
-    classifier_var_name = classifier_var_preffix + classifier_opt.upper()
-
-    try:
-        classifier_var = globals()[classifier_var_name]
-    except:
-        raise ValueError(
-            f"Option {classifier_opt} is not a valid option of classifier."+
-            " Valid options are set, class or id."
-        )
+    classifier_dict = get_classifier_dict(classifier_opt)
     
-    return classifier_var.get(classifier, False)
+    block_opt = KEY_OPTIONS_FOR_SETTINGS[0]
+    
+    return classifier_dict.get(classifier, {}).get(block_opt, False)
 
 def remove_log_blocked_by_classifier(
         classifier: str, 
         classifier_opt: str
     ) -> None:
     """
-    Remove a classifier(set, class, id) that was set to block logs.
-    Raise KeyError if classifier doesn't exist.
+    Remove the blocking config for the given classifier.
     """
-    classifier_var_preffix = "BLOCKED_LOGS_"
-    classifier_var_name = classifier_var_preffix + classifier_opt.upper()
+    classifier_dict = get_classifier_dict(classifier_opt)
 
-    try:
-        classifier_var = globals()[classifier_var_name]
-    except:
-        raise ValueError(
-            f"Option {classifier_opt} is not a valid option of classifier."+
-            " Valid options are set, class or id."
-        )
-    
-    try: classifier_var.pop(classifier)
-    except:
-        raise KeyError(f"Classifier {classifier}, "+
-                       f"doesn't exists in blockeds {classifier_opt.upper()}s")
+    if specific_c_config_dict := classifier_dict.get(classifier, {}):
+        block_opt = KEY_OPTIONS_FOR_SETTINGS[0]
+        specific_c_config_dict[block_opt] = False
+
+        return
     
 def write_all_logs_to(path: str) -> None:
     """
-    Set all logs to be written to param path.
+    Configure all logs to be written to param path.
     """
-    const_name = "WRITE_ALL_LOGS_TO" 
-    globals()[const_name] = path
+    write_to_opt = KEY_OPTIONS_FOR_SETTINGS[1]
+
+    global_logs_settings[write_to_opt] = path
 
 def get_write_all_logs_to() -> str:
     """
-    Get where all logs were set to be written.
+    Get where all logs were configured to be written.
     """
-    const_name = "WRITE_ALL_LOGS_TO" 
-    return globals()[const_name]
+    write_to_opt = KEY_OPTIONS_FOR_SETTINGS[1]
+
+    return global_logs_settings.get(write_to_opt, "")
 
 def write_log_to_by_classifier(
         classifier: str, 
@@ -125,62 +129,46 @@ def write_log_to_by_classifier(
         classifier_opt: str
     ) -> None:
     """
-    Set a classifier(set, class, id) to set where a log will be written.
+    Configure a classifier(set, class, id) to 
+    configure where a log will be written.
     """
-    classifier_var_preffix = "WRITE_LOGS_TO_BY_"
-    classifier_var_name = classifier_var_preffix + classifier_opt.upper()
-
-    try:
-        classifier_var = globals()[classifier_var_name]
-    except:
-        raise ValueError(
-            f"Option {classifier_opt} is not a valid option of classifier."+
-            " Valid options are set, class or id."
-        )
+    classifier_dict = get_classifier_dict(classifier_opt)
     
-    classifier_var[classifier] = path
+    block_opt = KEY_OPTIONS_FOR_SETTINGS[0]
+    write_to_opt = KEY_OPTIONS_FOR_SETTINGS[1]
+
+    block_config = get_log_blocked_by_classifier(classifier, classifier_opt)
+
+    classifier_dict[classifier] = {
+        block_opt: block_config, 
+        write_to_opt: path
+        }
     
 def get_write_log_to_by_classifier(
         classifier: str, 
         classifier_opt: str
     ) -> str:
     """
-    Get the path of a classifier(set, class, id).
+    Get the path that was configured for a classifier(set, class, id).
     """
-    classifier_var_preffix = "WRITE_LOGS_TO_BY_"
-    classifier_var_name = classifier_var_preffix + classifier_opt.upper()
-
-    try:
-        classifier_var = globals()[classifier_var_name]
-    except:
-        raise ValueError(
-            f"Option {classifier_opt} is not a valid option of classifier."+
-            " Valid options are set, class or id."
-        )
+    classifier_dict = get_classifier_dict(classifier_opt)
     
-    return classifier_var.get(classifier, "")
+    write_to_opt = KEY_OPTIONS_FOR_SETTINGS[1]
+
+    return classifier_dict.get(classifier, {}).get(write_to_opt, "")
 
 def remove_write_log_to_by_classifier(
         classifier: str, 
         classifier_opt: str
     ) -> None:
     """
-    Remove a classifier path and raise KeyError if 
-    classifier path's was not set.
+    Remove the path (write_to config) configured for the given classifier.
     """
-    classifier_var_preffix = "WRITE_LOGS_TO_BY_"
-    classifier_var_name = classifier_var_preffix + classifier_opt.upper()
+    classifier_dict = get_classifier_dict(classifier_opt)
 
-    try:
-        classifier_var = globals()[classifier_var_name]
-    except:
-        raise ValueError(
-            f"Option {classifier_opt} is not a valid option of classifier."+
-            " Valid options are set, class or id."
-        )
+    if specific_c_config_dict := classifier_dict.get(classifier, {}):
+        write_to_opt = KEY_OPTIONS_FOR_SETTINGS[1]
+        specific_c_config_dict[write_to_opt] = ""
+
+        return
     
-
-    try: classifier_var.pop(classifier)
-    except:
-        raise KeyError(f"Classifier {classifier}, "+
-                       f"doesn't exists in blockeds {classifier_opt.upper()}s")

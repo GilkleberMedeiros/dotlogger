@@ -1,7 +1,8 @@
-from dotlogger import *
-from tests.dotlogger_temporary_test import test, Test
+from .dotlogger import *
+from tests.dotlogger_temporary_tests import test, Test
+from .tests.unit_settings_test import TestSettings
 
 
-test()
+#test()
 
-Test.test()
+#Test.test()
