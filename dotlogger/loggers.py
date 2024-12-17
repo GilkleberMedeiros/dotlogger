@@ -81,7 +81,7 @@ class DotLogger(AbstractLogger):
     
     def is_blocked_by_id(self) -> bool:
         """Return True if log is blocked by classifier id, otherwise False"""
-        return get_log_blocked_by_classifier(self.id, "id")
+        return get_log_blocked_by_classifier(id, "id")
     
     def assemble_log(
         self, 
@@ -150,7 +150,7 @@ class DotLogger(AbstractLogger):
                 if place_path_obj.is_file():
                     func_to_write_log = self.write_text_to_file(place)
                 elif place_path_obj.is_dir():
-                    place = self.get_log_file_path(place)
+                    place = self.create_log_file_with_datestring_name(place)
                     func_to_write_log = self.write_text_to_file(place)
                 else:
                     raise Exception(
@@ -167,7 +167,7 @@ class DotLogger(AbstractLogger):
                 else:
                     place_path_obj.mkdir(parents=True)
                     if place_path_obj.is_dir():
-                        place = self.get_log_file_path(place)
+                        place = self.create_log_file_with_datestring_name(place)
                         func_to_write_log = self.write_text_to_file(place)
                     else:
                         raise Exception(
@@ -201,7 +201,7 @@ class DotLogger(AbstractLogger):
         
         return inner
     
-    def get_log_file_path(self, dir_path: str) -> str:
+    def create_log_file_with_datestring_name(self, dir_path: str) -> str:
         """
         Receive a dir path and return a path (as plain string) for an already created log file.
         filename will be as the date_filename_format passed in constructor.
