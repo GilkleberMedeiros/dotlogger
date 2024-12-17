@@ -48,9 +48,7 @@ class DotLogger(AbstractLogger):
             on_resource: str = "",
             write_to: str = "",
         ) -> bool:
-        self.id = id
-
-        if self.is_log_blocked():
+        if self.is_log_blocked(id):
             return False
 
         stack = inspect.stack()
@@ -63,13 +61,13 @@ class DotLogger(AbstractLogger):
 
         return func_to_write_log(log_msg)
 
-    def is_log_blocked(self) -> bool:
+    def is_log_blocked(self, id: str) -> bool:
         """
         Return True if log is blocked in some way, 
         otherwise False.
         """
         return get_all_logs_blocked() or self.is_blocked_by_set() or \
-            self.is_blocked_by_class() or self.is_blocked_by_id()
+            self.is_blocked_by_class() or self.is_blocked_by_id(id)
     
     def is_blocked_by_set(self) -> bool:
         """Return True if log is blocked by classifier set, otherwise False"""
@@ -79,7 +77,7 @@ class DotLogger(AbstractLogger):
         """Return True if log is blocked by classifier class, otherwise False"""
         return get_log_blocked_by_classifier(self.log_class, "class")
     
-    def is_blocked_by_id(self) -> bool:
+    def is_blocked_by_id(self, id: str) -> bool:
         """Return True if log is blocked by classifier id, otherwise False"""
         return get_log_blocked_by_classifier(id, "id")
     
