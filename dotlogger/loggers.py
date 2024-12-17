@@ -179,7 +179,8 @@ class DotLogger(AbstractLogger):
     
     def write_text_to_file(self, path: str) -> Callable[[str], bool]:
         """
-        Parent closure function.
+        Parent closure function. Receive path param and let 
+        it to child closure function.
         """
         def inner(msg: str) -> bool:
             """
