@@ -52,7 +52,7 @@ class DotLogger(AbstractLogger):
             return False
 
         stack = inspect.stack()
-        self.caller_frame = stack[1] if len(stack) > 1 else 0
+        self.__caller_frame = stack[1] if len(stack) > 1 else 0
 
         log_msg = self.assemble_log(msg, type, include_date, include_time, in_location, on_resource)
 
@@ -123,11 +123,11 @@ class DotLogger(AbstractLogger):
     
     def get_default_location(self) -> str:
         """Get and return default log location already formated."""
-        return f"IN {self.caller_frame.filename} " if self.caller_frame != 0 else ""
+        return f"IN {self.__caller_frame.filename} " if self.caller_frame != 0 else ""
     
     def get_default_resource(self) -> str:
         """Get and return default log resource already formated."""
-        return f"ON {self.caller_frame.function} " if self.caller_frame != 0 else ""
+        return f"ON {self.__caller_frame.function} " if self.caller_frame != 0 else ""
     
     @staticmethod
     def get_place_to_write_log(write_to_param: str) -> str:
