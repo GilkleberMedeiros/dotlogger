@@ -48,6 +48,8 @@ class DotLogger(AbstractLogger):
             on_resource: str = "",
             write_to: str = "",
         ) -> bool:
+        self.id = id
+
         if self.is_log_blocked(id):
             return False
 
@@ -159,7 +161,7 @@ class DotLogger(AbstractLogger):
                 if place_path_obj.suffix:
                     if not place_path_obj.parent.exists():
                         place_path_obj.parent.mkdir(parents=True)
-                        
+                                         
                     place_path_obj.touch()
                     func_to_write_log = self.write_text_to_file(place)
                 else:
