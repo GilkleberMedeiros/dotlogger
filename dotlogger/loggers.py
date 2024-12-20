@@ -166,14 +166,9 @@ class DotLogger(AbstractLogger):
                     func_to_write_log = self.write_text_to_file(place)
                 else:
                     place_path_obj.mkdir(parents=True)
-                    if place_path_obj.is_dir():
-                        place = self.create_log_file_with_datestring_name(place)
-                        func_to_write_log = self.write_text_to_file(place)
-                    else:
-                        raise Exception(
-                            "Path passed is not a dir or file path."+
-                            f" in log {self.log_repr()}"
-                            )
+                    
+                    place = self.create_log_file_with_datestring_name(place)
+                    func_to_write_log = self.write_text_to_file(place)
                 
         return func_to_write_log
     
