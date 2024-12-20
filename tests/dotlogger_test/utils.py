@@ -9,6 +9,6 @@ class DotLoggerTestCreator:
 
 class PathMockCreator:
     @classmethod
-    def fact_pathmock(cls) -> Mock():
+    def fact_pathmock(cls) -> Mock:
         return Mock()
     
