@@ -103,6 +103,8 @@ class TestDotLogger:
 
         logger.create_log_file_with_datestring_name.assert_called_once_with(self.DIR_PATH_THAT_EXIST)
         logger.write_text_to_file.assert_called_once_with(clfwdsn_mocked_return)
+        pathmock.mkdir.assert_not_called()
+        pathmock.touch.assert_not_called()
 
     def test_getFuncToWriteLog_whenDirPathNotExistPassed_performExpectedBehavior(self) -> None:
         logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_get_func_to_write_log()
@@ -116,6 +118,7 @@ class TestDotLogger:
         pathmock.mkdir.assert_called_once_with(parents=True)
         logger.create_log_file_with_datestring_name.assert_called_once_with(self.DIR_PATH_THAT_NOT_EXIST)
         logger.write_text_to_file.assert_called_once_with(clfwdsn_mocked_return)
+        pathmock.touch.assert_not_called()
 
     def test_getFuncToWriteLog_whenFilePathExistPassed_performExpectedBehavior(self) -> None:
         logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_get_func_to_write_log()
@@ -126,6 +129,9 @@ class TestDotLogger:
             logger.get_func_to_write_log(self.FILE_PATH_THAT_EXIST)
 
         logger.write_text_to_file.assert_called_once_with(self.FILE_PATH_THAT_EXIST)
+        pathmock.mkdir.assert_not_called()
+        logger.create_log_file_with_datestring_name.assert_not_called()
+        pathmock.touch.assert_not_called()
 
     def test_getFuncToWriteLog_whenFilePathNotExistPassed_performExpectedBehavior(self) -> None:
         logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_get_func_to_write_log()
@@ -137,6 +143,8 @@ class TestDotLogger:
 
         pathmock.touch.assert_called_once_with()
         logger.write_text_to_file.assert_called_once_with(self.FILE_PATH_THAT_NOT_EXIST)
+        pathmock.mkdir.assert_not_called()
+        logger.create_log_file_with_datestring_name.assert_not_called()
 
     def test_getFuncToWriteLog_whenNotExistFileWithNEParentPassed_performExpectedBehavior(self) -> None:
         logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_get_func_to_write_log()
@@ -149,6 +157,7 @@ class TestDotLogger:
         pathmock.mkdir.assert_called_once_with(parents=True)
         pathmock.touch.assert_called_once_with()
         logger.write_text_to_file.assert_called_once_with(self.NOT_EXIST_FILE_PATH_WITH_NOT_EXIST_PARENT)
+        logger.create_log_file_with_datestring_name.assert_not_called()
 
     def test_assembleLog_whenDefaultParamsPassed_returnsExpectedLogString(self) -> None:
         logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_assemble_log()
