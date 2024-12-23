@@ -6,6 +6,8 @@ from pytest import Pytester
 from pathlib import Path
 
 
+# TODO: Talvez adicionar um teste de retorn e comportamento para get_func_to_write_log
+# quando uma string qualquer é passada.
 class TestDotLogger:
     LOG_SET = "set"
     LOG_CLASS = "class"
@@ -22,6 +24,9 @@ class TestDotLogger:
     
     # Scopes for dependency mock
     DOTLOGGER_LOGGERS_PATH_SCOPE = "dotlogger.loggers.Path"
+
+    def test_DotLogger_whenInstantiated_instantiateNormally(self) -> None:
+        assert DotLogger() is not None
 
     def test_getFuncToWriteLog_whenPrintStringPassed_returnsPrintFunc(self) -> None:
         logger = DotLoggerTestCreator.fact_logger()
