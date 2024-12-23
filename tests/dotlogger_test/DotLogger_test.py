@@ -5,20 +5,20 @@ from pytest import Pytester
 
 from pathlib import Path
 
-# TODO: Testar o valor de retorno e o comportamento do método 
-# get_func_to_write_log quando uma string qualquer é passada e 
-# quando arquivo que não existe com um dir pai que não existe
-# são passados.
+
 class TestDotLogger:
     LOG_SET = "set"
     LOG_CLASS = "class"
     LOG_ID = "id"
     LOG_TYPE = "ERROR"
     LOG_MSG = "MSG"
-    DIR_PATH_THAT_NOT_EXIST = "./folder_for_tests/dir_that_not_exist/"
-    DIR_PATH_THAT_EXIST = "./folder_for_tests/dir_that_exist/"
-    FILE_PATH_THAT_NOT_EXIST = "./folder_for_tests/dir_that_exist/file_that_not_exists.txt"
-    FILE_PATH_THAT_EXIST = "./folder_for_tests/dir_that_exist/file_that_exists.txt"
+    BASE_PATH = "C:/Users/Pichau/OneDrive/Documentos/Projetos/Dot_Logger/tests/dotlogger_test"
+    DIR_PATH_THAT_NOT_EXIST = BASE_PATH + "/folder_for_tests/dir_that_not_exists/"
+    DIR_PATH_THAT_EXIST = BASE_PATH + "/folder_for_tests/dir_that_exists/"
+    FILE_PATH_THAT_NOT_EXIST = BASE_PATH + "/folder_for_tests/dir_that_exists/file_that_not_exists.txt"
+    FILE_PATH_THAT_EXIST = BASE_PATH + "/folder_for_tests/dir_that_exists/file_that_exists.txt"
+    NOT_EXIST_FILE_PATH_WITH_NOT_EXIST_PARENT = BASE_PATH + \
+        "/folder_for_tests/dir_that_not_exists/file_that_not_exists.txt"
     
     # Scopes for dependency mock
     DOTLOGGER_LOGGERS_PATH_SCOPE = "dotlogger.loggers.Path"
@@ -32,7 +32,7 @@ class TestDotLogger:
         assert actual_func == print, "DotLogger.get_func_to_write_log didn't returned print func."+ \
         " WhenPrintStringPassed."
 
-    def test_getFuncToWriteLog_whenDirPathExistPassed_retunsWriteTextToFileChildClosureFunc(self) -> None:
+    def test_getFuncToWriteLog_whenDirPathExistPassed_retunsInnerChildClosureFunc(self) -> None:
         logger = DotLoggerTestCreator.fact_logger()
         expected_func = logger.write_text_to_file(self.DIR_PATH_THAT_EXIST)
         path_scope = self.DOTLOGGER_LOGGERS_PATH_SCOPE
@@ -44,7 +44,7 @@ class TestDotLogger:
         assert actual_func.__code__ == expected_func.__code__, f"Expected {expected_func.__qualname__} not "+ \
         f"{actual_func.__qualname__}"
 
-    def test_getFuncToWriteLog_whenDirPathNotExistPassed_retunsWriteTextToFileChildClosureFunc(self) -> None:
+    def test_getFuncToWriteLog_whenDirPathNotExistPassed_retunsInnerChildClosureFunc(self) -> None:
         logger = DotLoggerTestCreator.fact_logger()
         expected_func = logger.write_text_to_file(self.DIR_PATH_THAT_NOT_EXIST)
         path_scope = self.DOTLOGGER_LOGGERS_PATH_SCOPE
@@ -56,7 +56,7 @@ class TestDotLogger:
         assert actual_func.__code__ == expected_func.__code__, f"Expected {expected_func.__qualname__} not "+ \
         f"{actual_func.__qualname__}"
 
-    def test_getFuncToWriteLog_whenFilePathExistPassed_retunsWriteTextToFileChildClosureFunc(self) -> None:
+    def test_getFuncToWriteLog_whenFilePathExistPassed_retunsInnerChildClosureFunc(self) -> None:
         logger = DotLoggerTestCreator.fact_logger()
         expected_func = logger.write_text_to_file(self.FILE_PATH_THAT_EXIST)
         path_scope = self.DOTLOGGER_LOGGERS_PATH_SCOPE
@@ -68,7 +68,7 @@ class TestDotLogger:
         assert actual_func.__code__ == expected_func.__code__, f"Expected {expected_func.__qualname__} not "+ \
         f"{actual_func.__qualname__}"
 
-    def test_getFuncToWriteLog_whenFilePathNotExistPassed_retunsWriteTextToFileChildClosureFunc(self) -> None:
+    def test_getFuncToWriteLog_whenFilePathNotExistPassed_retunsInnerChildClosureFunc(self) -> None:
         logger = DotLoggerTestCreator.fact_logger()
         expected_func = logger.write_text_to_file(self.FILE_PATH_THAT_NOT_EXIST)
         path_scope = self.DOTLOGGER_LOGGERS_PATH_SCOPE
@@ -76,6 +76,18 @@ class TestDotLogger:
 
         with patch(path_scope, pathmock, spec=Path) as pm:
             actual_func = logger.get_func_to_write_log(self.FILE_PATH_THAT_NOT_EXIST)
+
+        assert actual_func.__code__ == expected_func.__code__, f"Expected {expected_func.__qualname__} not "+ \
+        f"{actual_func.__qualname__}"
+
+    def test_getFuncToWriteLog_whenNotExistFilePathWithNEParentPassed_returnsInnerChildClosureFunc(self) -> None:
+        logger = DotLoggerTestCreator.fact_logger()
+        expected_func = logger.write_text_to_file(self.NOT_EXIST_FILE_PATH_WITH_NOT_EXIST_PARENT)
+        path_scope = self.DOTLOGGER_LOGGERS_PATH_SCOPE
+        pathmock = PathMockCreator.fact_parcial_path_mocked()
+
+        with patch(path_scope, pathmock, spec=Path) as pm:
+            actual_func = logger.get_func_to_write_log(self.NOT_EXIST_FILE_PATH_WITH_NOT_EXIST_PARENT)
 
         assert actual_func.__code__ == expected_func.__code__, f"Expected {expected_func.__qualname__} not "+ \
         f"{actual_func.__qualname__}"
@@ -121,10 +133,22 @@ class TestDotLogger:
         path_scope = self.DOTLOGGER_LOGGERS_PATH_SCOPE
 
         with patch(path_scope, pathmock, spec=Path) as pm:
-            logger.get_func_to_write_log(self.FILE_PATH_THAT_EXIST)
+            logger.get_func_to_write_log(self.FILE_PATH_THAT_NOT_EXIST)
 
         pathmock.touch.assert_called_once_with()
-        logger.write_text_to_file.assert_called_once_with(self.FILE_PATH_THAT_EXIST)
+        logger.write_text_to_file.assert_called_once_with(self.FILE_PATH_THAT_NOT_EXIST)
+
+    def test_getFuncToWriteLog_whenNotExistFileWithNEParentPassed_performExpectedBehavior(self) -> None:
+        logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_get_func_to_write_log()
+        pathmock = PathMockCreator.fact_parcial_path_mocked()
+        path_scope = self.DOTLOGGER_LOGGERS_PATH_SCOPE
+
+        with patch(path_scope, pathmock, spec=Path) as pm:
+            logger.get_func_to_write_log(self.NOT_EXIST_FILE_PATH_WITH_NOT_EXIST_PARENT)
+
+        pathmock.mkdir.assert_called_once_with(parents=True)
+        pathmock.touch.assert_called_once_with()
+        logger.write_text_to_file.assert_called_once_with(self.NOT_EXIST_FILE_PATH_WITH_NOT_EXIST_PARENT)
 
     def test_assembleLog_whenDefaultParamsPassed_returnsExpectedLogString(self) -> None:
         logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_assemble_log()

@@ -1,5 +1,5 @@
 from dotlogger import DotLogger
-from unittest.mock import Mock
+from unittest.mock import Mock, PropertyMock
 
 from pathlib import Path
 from typing import Callable
@@ -79,3 +79,4 @@ class PathMockCreator:
         Path.touch = Mock()
 
         return Path
+    
