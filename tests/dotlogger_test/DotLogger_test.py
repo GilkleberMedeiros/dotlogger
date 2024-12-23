@@ -1,12 +1,15 @@
 from dotlogger import DotLogger
 from unittest.mock import patch, Mock, PropertyMock
-from utils import DotLoggerTestCreator
+from utils import DotLoggerTestCreator, PathMockCreator
 from pytest import Pytester
 
+from pathlib import Path
 
-# TODO: Testar comportamento interno do método get_func_to_Write_log 
-# quando passado caminhos de arquivo ou diretório que exitem ou não
-# TODO: Criar um creator e alguns factory methods para o attr logger
+# TODO: Refatorar os teste para eliminar as magic strings.
+# TODO: Testar o valor de retorno e o comportamento do método 
+# get_func_to_write_log quando uma string qualquer é passada e 
+# quando arquivo que não existe com um dir pai que não existe
+# são passados.
 class TestDotLogger:
     LOG_SET = "set"
     LOG_CLASS = "class"
@@ -29,6 +32,92 @@ class TestDotLogger:
 
         assert actual_func == print, "DotLogger.get_func_to_write_log didn't returned print func."+ \
         " WhenPrintStringPassed."
+
+    def test_getFuncToWriteLog_whenDirPathExistPassed_retunsWriteTextToFileChildClosureFunc(self) -> None:
+        logger = DotLoggerTestCreator.fact_logger()
+        expected_func = logger.write_text_to_file(self.DIR_PATH_THAT_EXIST)
+        pathmock = PathMockCreator.fact_parcial_path_mocked()
+
+        with patch("dotlogger.loggers.Path", pathmock, spec=Path) as pm:
+            actual_func = logger.get_func_to_write_log(self.DIR_PATH_THAT_EXIST)
+
+        assert actual_func.__code__ == expected_func.__code__, f"Expected {expected_func.__qualname__} not "+ \
+        f"{actual_func.__qualname__}"
+
+    def test_getFuncToWriteLog_whenDirPathNotExistPassed_retunsWriteTextToFileChildClosureFunc(self) -> None:
+        logger = DotLoggerTestCreator.fact_logger()
+        expected_func = logger.write_text_to_file(self.DIR_PATH_THAT_NOT_EXIST)
+        pathmock = PathMockCreator.fact_parcial_path_mocked()
+
+        with patch("dotlogger.loggers.Path", pathmock, spec=Path) as pm:
+            actual_func = logger.get_func_to_write_log(self.DIR_PATH_THAT_NOT_EXIST)
+
+        assert actual_func.__code__ == expected_func.__code__, f"Expected {expected_func.__qualname__} not "+ \
+        f"{actual_func.__qualname__}"
+
+    def test_getFuncToWriteLog_whenFilePathExistPassed_retunsWriteTextToFileChildClosureFunc(self) -> None:
+        logger = DotLoggerTestCreator.fact_logger()
+        expected_func = logger.write_text_to_file(self.FILE_PATH_THAT_EXIST)
+        pathmock = PathMockCreator.fact_parcial_path_mocked()
+
+        with patch("dotlogger.loggers.Path", pathmock, spec=Path) as pm:
+            actual_func = logger.get_func_to_write_log(self.FILE_PATH_THAT_EXIST)
+
+        assert actual_func.__code__ == expected_func.__code__, f"Expected {expected_func.__qualname__} not "+ \
+        f"{actual_func.__qualname__}"
+
+    def test_getFuncToWriteLog_whenFilePathNotExistPassed_retunsWriteTextToFileChildClosureFunc(self) -> None:
+        logger = DotLoggerTestCreator.fact_logger()
+        expected_func = logger.write_text_to_file(self.FILE_PATH_THAT_NOT_EXIST)
+        pathmock = PathMockCreator.fact_parcial_path_mocked()
+
+        with patch("dotlogger.loggers.Path", pathmock, spec=Path) as pm:
+            actual_func = logger.get_func_to_write_log(self.FILE_PATH_THAT_NOT_EXIST)
+
+        assert actual_func.__code__ == expected_func.__code__, f"Expected {expected_func.__qualname__} not "+ \
+        f"{actual_func.__qualname__}"
+    
+    def test_getFuncToWriteLog_whenDirPathExistPassed_performExpectedBehavior(self) -> None:
+        logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_get_func_to_write_log()
+        pathmock = PathMockCreator.fact_parcial_path_mocked()
+        clfwdsn_mocked_return = "GGGG"
+
+        with patch("dotlogger.loggers.Path", pathmock, spec=Path) as pm:
+            logger.get_func_to_write_log(self.DIR_PATH_THAT_EXIST)
+
+        logger.create_log_file_with_datestring_name.assert_called_once_with(self.DIR_PATH_THAT_EXIST)
+        logger.write_text_to_file.assert_called_once_with(clfwdsn_mocked_return)
+
+    def test_getFuncToWriteLog_whenDirPathNotExistPassed_performExpectedBehavior(self) -> None:
+        logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_get_func_to_write_log()
+        pathmock = PathMockCreator.fact_parcial_path_mocked()
+        clfwdsn_mocked_return = "GGGG"
+
+        with patch("dotlogger.loggers.Path", pathmock, spec=Path) as pm:
+            logger.get_func_to_write_log(self.DIR_PATH_THAT_NOT_EXIST)
+
+        pathmock.mkdir.assert_called_once_with(parents=True)
+        logger.create_log_file_with_datestring_name.assert_called_once_with(self.DIR_PATH_THAT_NOT_EXIST)
+        logger.write_text_to_file.assert_called_once_with(clfwdsn_mocked_return)
+
+    def test_getFuncToWriteLog_whenFilePathExistPassed_performExpectedBehavior(self) -> None:
+        logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_get_func_to_write_log()
+        pathmock = PathMockCreator.fact_parcial_path_mocked()
+
+        with patch("dotlogger.loggers.Path", pathmock, spec=Path) as pm:
+            logger.get_func_to_write_log(self.FILE_PATH_THAT_EXIST)
+
+        logger.write_text_to_file.assert_called_once_with(self.FILE_PATH_THAT_EXIST)
+
+    def test_getFuncToWriteLog_whenFilePathNotExistPassed_performExpectedBehavior(self) -> None:
+        logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_get_func_to_write_log()
+        pathmock = PathMockCreator.fact_parcial_path_mocked()
+
+        with patch("dotlogger.loggers.Path", pathmock, spec=Path) as pm:
+            logger.get_func_to_write_log(self.FILE_PATH_THAT_EXIST)
+
+        pathmock.touch.assert_called_once_with()
+        logger.write_text_to_file.assert_called_once_with(self.FILE_PATH_THAT_EXIST)
 
     def test_assembleLog_whenDefaultParamsPassed_returnsExpectedLogString(self) -> None:
         logger = DotLoggerTestCreator.fact_parcial_mocked_logger_for_assemble_log()
