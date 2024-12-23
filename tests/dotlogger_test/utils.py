@@ -1,6 +1,9 @@
 from dotlogger import DotLogger
 from unittest.mock import Mock
 
+from pathlib import Path
+from typing import Callable
+
 
 class DotLoggerTestCreator:
     @classmethod
@@ -32,9 +35,36 @@ class DotLoggerTestCreator:
         logger.get_default_resource = Mock(**gdr)
 
         return logger
+    
+    @classmethod
+    def fact_parcial_mocked_logger_for_get_func_to_write_log(
+            cls, 
+            log_set: str = "set", 
+            log_class: str = "class",
+            mock_params: dict[str, any] = {},
+        ) -> DotLogger:
+        clfwdsn = {"return_value": "GGGG"}
+        wttf = {"return_value": Callable[[str], bool]}
+
+        if mock_params.get("create_log_file_with_datestring_name", False):
+            clfwdsn = mock_params["create_log_file_with_datestring_name"]
+        if mock_params.get("write_text_to_file", False):
+            wttf = mock_params["write_text_to_file"]
+
+        logger = cls.fact_logger(log_set, log_class)
+        logger.create_log_file_with_datestring_name = Mock(**clfwdsn)
+        logger.write_text_to_file = Mock(**wttf)
+
+        return logger
 
 class PathMockCreator:
     @classmethod
     def fact_pathmock(cls) -> Mock:
         return Mock()
     
+    @classmethod
+    def fact_parcial_path_mocked(cls) -> Path:
+        Path.mkdir = Mock()
+        Path.touch = Mock()
+
+        return Path
